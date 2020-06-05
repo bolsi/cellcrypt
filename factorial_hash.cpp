@@ -31,12 +31,10 @@
  *
  * - I watched for unsigned numbers, since we are only dealing with positive
  *   numbers;
- * - For factorial result used uint64_t type, since it is a type the stores
- *   greater numbers;
+ * - For factorial result used boost::multiprecision::mpz_int type, since it
+ *   stores greater numbers;
  * - If memory was really really an issue, the code could be reorganized to be a
  *   single functions to avoid some variables and copies, like the std::vector;
- * - And, of course, adjust code so memory is not a problem to solve factorial
- *   for big numbers;
  *
  *  * Obs: I would break the related function on its own library. but kept it
  *         all here for ease of reading.
