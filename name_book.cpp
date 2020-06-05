@@ -39,6 +39,20 @@
  *
  * Obs: I would break class on its own .cpp and .h file. but kept it all here
  *      for ease of reading.
+ *
+ * New changes:
+ * - method IsConsistent() is executing for last element without any need, but
+ *   to avoid that, we have to check is list is empty before loop. It would be
+ *   changing one IF for another; Decide to keep it;
+ * - IsConsistent() was kept for comparisons, because new approach does not need
+ *   it;
+ * - Code was changed to verify consistency of name list when name is
+ *   being added to name list;
+ * - To keep track of consistency state, a new attribute 'consistent_' was
+ *   created;
+ * - For this version, without the need of method IsConsistent(), std::vector is
+ *   not mandatory, but still a good choice since it is fast and has
+ *   little overhead. No need for a double linked list as std::list
  */
 
 #include <fstream>
@@ -55,13 +69,14 @@ class NameBook {
   /**
    * \brief Default constructor
    */
-  NameBook() : name_list_{} {}
+  NameBook() : name_list_(), consistent_(true) {}
 
   /**
    * \brief Constructor by file of names
    * \param file_name File with names (one by line)
    */
-  explicit NameBook(const std::string &file_name) : name_list_{} {
+  explicit NameBook(const std::string &file_name)
+      : name_list_(), consistent_(true) {
     ReadNames(file_name);
   }
 
@@ -81,6 +96,9 @@ class NameBook {
     std::string name{};
 
     while (f >> name) {
+      if (!CheckNameConsistency(name)) {
+        consistent_ = false;
+      }
       name_list_.push_back(name);
     }
 
@@ -97,12 +115,21 @@ class NameBook {
    * \brief Add name to name list
    * \param name Name to be added to name list
    */
-  void AddName(const std::string &name) { name_list_.push_back(name); }
+  void AddName(const std::string &name) {
+    if (!CheckNameConsistency(name)) {
+      consistent_ = false;
+    }
+
+    name_list_.push_back(name);
+  }
 
   /**
    * \brief Remove all names from name list
    */
-  void ClearNames() { name_list_.clear(); }
+  void ClearNames() {
+    name_list_.clear();
+    consistent_ = true;
+  }
 
   /**
    * \brief Get list name as string (one by line)
@@ -133,16 +160,8 @@ class NameBook {
       for (uint32_t j = i + 1; j < name_list_.size(); ++j) {
         const std::string name_2 = (name_list_[j]);
 
-        // check if name_2 is a substring of name_1
-        uint32_t pos_1 = name_1.find(name_2);
-        if (pos_1 != std::string::npos && pos_1 == 0) {
-          return false;  // inconsistent! no need to go on
-        }
-
-        // check if name_1 is a substring of name_2
-        uint32_t pos_2 = name_2.find(name_1);
-        if (pos_2 != std::string::npos && pos_2 == 0) {
-          return false;  // inconsistent! no need to go on
+        if (CheckIfSubString(name_1, name_2)) {
+          return false;
         }
       }
     }
@@ -150,17 +169,66 @@ class NameBook {
     return true;
   }
 
-  friend std::ostream &operator<<(std::ostream &o, NameBook name_book);
+  /**
+   * \brief Check is name list is consistent
+   *
+   * If no name begins with the same sequence of letters that makes up another
+   * whole name
+   *
+   * \return true is name list is consistent; false otherwise
+   */
+  bool consistent() const { return consistent_; }
+
+  friend std::ostream &operator<<(std::ostream &o, const NameBook &name_book);
 
  private:
-  std::vector<std::string> name_list_;
+  /**
+   * \brief Check if string are substring of each other
+   * \param name_1 First name
+   * \param name_2 Second name
+   * \return true if substring; false otherwise
+   */
+  bool CheckIfSubString(const std::string name_1,
+                        const std::string name_2) const {
+    // check if name_2 is a substring of name_1
+    uint32_t pos_1 = name_1.find(name_2);
+    if (pos_1 != std::string::npos && pos_1 == 0) {
+      return true;
+    }
+
+    // check if name_1 is a substring of name_2
+    uint32_t pos_2 = name_2.find(name_1);
+    if (pos_2 != std::string::npos && pos_2 == 0) {
+      return true;
+    }
+
+    return false;
+  }
+
+  /**
+   * \brief Check name consistency against name list
+   * \param name_1 First name
+   * \return true is name list is consistent with given name; false otherwise
+   */
+  bool CheckNameConsistency(const std::string name) {
+    for (const auto &name_in_l : name_list_) {
+      if (CheckIfSubString(name, name_in_l)) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  std::vector<std::string> name_list_;  //!< Name list
+  bool consistent_;  //!< Flag to indicate if name list is consistent
 };
 
 /**
  * \brief Stream output NameBook (one by line)
  * \return Stream output NameBook
  */
-std::ostream &operator<<(std::ostream &o, NameBook name_book) {
+std::ostream &operator<<(std::ostream &o, const NameBook &name_book) {
   for (const auto &name : name_book.name_list_) {
     o << name << "\n";
   }
@@ -182,7 +250,7 @@ int main() {
   std::cin >> file_name;
 
   // constructed with name
-  NameBook name_book{file_name};
+  // NameBook name_book{file_name};
 
   // default constructed and read file
   /*
@@ -191,19 +259,22 @@ int main() {
   */
 
   // default constructed and add name by name
-  /*
-    NameBook name_book;
-    std::fstream f;
-    f.open(file_name);
 
-    std::string name{};
+  NameBook name_book;
+  std::fstream f;
+  f.open(file_name);
 
-    while (f >> name) {
-      name_book.AddName(name);
-    }
+  std::string name{};
 
-    f.close();
-  */
+  while (f >> name) {
+    name_book.AddName(name);
+    // std::cout << "Adding " << name << "; Name book is consistent? "
+    //         << (name_book.consistent() ? "true" : "false") << std::endl;
+  }
+  std::cout << "Name book is consistent after loop? "
+            << (name_book.consistent() ? "true" : "false") << std::endl;
+
+  f.close();
 
   // std::cout << "Names read: " << std::endl << name_book;
 
