@@ -45,18 +45,15 @@
 #include <iostream>
 #include <vector>
 
+#include <boost/multiprecision/gmp.hpp>
+
 /**
  * \brief Calculates the factorial of a number
  * \param num Number to calculate factorial
  * \return Factorial of given number
  */
-uint64_t factorial(uint32_t num) {
-  // TODO(felipe.bolsi): figure it out how to deal with really big numbers!
-  //
-  // I did a quick search and there are options, like C++ classes for this
-  // purpose and a method of breaking the number into an array to store its
-  // parts.
-  uint64_t f = 1;
+boost::multiprecision::mpz_int factorial(uint32_t num) {
+  boost::multiprecision::mpz_int f(1);
 
   for (uint32_t i = num; i > 0; --i) {
     f *= i;
@@ -70,13 +67,15 @@ uint64_t factorial(uint32_t num) {
  * \param num Number to split
  * \return Vector of with every digit of number given number
  */
-std::vector<unsigned int> split_num_into_digits(uint64_t num) {
+std::vector<uint32_t> split_num_into_digits(
+    boost::multiprecision::mpz_int num) {
   std::vector<uint32_t> v;
 
+  const boost::multiprecision::mpz_int base(10);
+
   while (num > 0) {
-    unsigned int digit = num % 10;
-    v.push_back(digit);
-    // std::cout << "Digit " << digit << std::endl;
+    boost::multiprecision::mpz_int digit(num % base);
+    v.push_back(std::atoi(digit.str().c_str()));
     num /= 10;
   }
 
@@ -88,7 +87,7 @@ std::vector<unsigned int> split_num_into_digits(uint64_t num) {
  * \param num Number to calculate the sum
  * \return Sum of digits of given number
  */
-unsigned int sum_of_digits(uint64_t num) {
+unsigned int sum_of_digits(boost::multiprecision::mpz_int num) {
   const std::vector<uint32_t> &v = split_num_into_digits(num);
 
   uint32_t sum = 0;
@@ -116,7 +115,7 @@ int main() {
     return -1;
   }
 
-  uint64_t f = factorial(x);
+  boost::multiprecision::mpz_int f = factorial(x);
   // std::cout << "Factorial of " << x << " = " << f << std::endl;
 
   uint32_t digit_sum = sum_of_digits(f);
