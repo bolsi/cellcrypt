@@ -24,8 +24,9 @@
  *   well. First factorial, then split into digits and last the sum of digits;
  * - Testing the factorial function I was worried with the upper and lower
  *   limits. factorial of 0 must be equals 1. That is correct. But when testing
- *   upper limit I checked that values is not being corrected calculates. Number
- *   is too big! Values greater than 65 are not calculated correctly.
+ *   upper limit I checked that values were not being corrected calculates.
+ *   Number is too big! Used used boost::multiprecision::mpz_int type to solve
+ *   problem.
  *
  * 3. Optimization
  *
