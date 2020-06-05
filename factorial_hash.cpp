@@ -39,58 +39,98 @@
  *
  *  * Obs: I would break the related function on its own library. but kept it
  *         all here for ease of reading.
+ *
+ * New changes:
+ * - Since logic changed, and its a bit more complex, now it makes sense to have
+ *   a class to encapsulate data e control behavior over it;
+ * - Created BigNumber class;
+ * - BigNumber class encapsulates std::vector that keeps track of every decimal
+ *   part
+ * - Implemented operator*(), only one needed now, that performs multiplication;
+ * - Implemented operator<<() -> it knows how to stream BigNumber;
+ * - All other operator should be implemented;
  */
 
 #include <iostream>
 #include <vector>
 
-#include <boost/multiprecision/gmp.hpp>
+class BigNum {
+ public:
+  BigNum() : big_num_() {}
+
+  explicit BigNum(const std::string &num) : big_num_() {
+    for (uint32_t i = 0; i < num.size(); ++i) {
+      std::string c(1, num[i]);
+      big_num_.push_back(std::atoi(c.c_str()));
+    }
+  }
+
+  BigNum &operator*(uint32_t num) {
+    uint32_t carry = 0;
+
+    for (uint32_t i = 0; i < big_num_.size(); ++i) {
+      uint32_t prod = big_num_[i] * num + carry;
+
+      big_num_[i] = prod % 10;
+
+      carry = prod / 10;
+    }
+
+    while (carry) {
+      big_num_.push_back(carry % 10);
+      carry = carry / 10;
+    }
+
+    return *this;
+  }
+
+  const std::vector<uint32_t> &big_num_raw() const { return big_num_; }
+
+  // TODO(felipe.bolsi) add other operators!
+
+  friend std::ostream &operator<<(std::ostream &o, const BigNum &big_num);
+
+ private:
+  std::vector<uint32_t> big_num_;
+};
+
+/**
+ * \brief Stream output BigNum
+ * \return Stream output BigNum
+ */
+std::ostream &operator<<(std::ostream &o, const BigNum &big_num) {
+  if (!big_num.big_num_.empty()) {
+    for (int32_t i = (big_num.big_num_.size() - 1); i >= 0; --i) {
+      o << big_num.big_num_[i];
+    }
+  }
+
+  return o;
+}
 
 /**
  * \brief Calculates the factorial of a number
  * \param num Number to calculate factorial
  * \return Factorial of given number
  */
-boost::multiprecision::mpz_int factorial(uint32_t num) {
-  boost::multiprecision::mpz_int f(1);
+BigNum factorial(uint32_t num) {
+  BigNum f("1");
 
   for (uint32_t i = num; i > 0; --i) {
-    f *= i;
+    f = f * i;
   }
 
   return f;
 }
 
 /**
- * \brief Splits a numbert into its digits
- * \param num Number to split
- * \return Vector of with every digit of number given number
- */
-std::vector<uint32_t> split_num_into_digits(
-    boost::multiprecision::mpz_int num) {
-  std::vector<uint32_t> v;
-
-  const boost::multiprecision::mpz_int base(10);
-
-  while (num > 0) {
-    boost::multiprecision::mpz_int digit(num % base);
-    v.push_back(std::atoi(digit.str().c_str()));
-    num /= 10;
-  }
-
-  return v;
-}
-
-/**
  * \brief Calculates the sum of digits of a number
- * \param num Number to calculate the sum
+ * \param big_num Number to calculate the sum
  * \return Sum of digits of given number
  */
-unsigned int sum_of_digits(boost::multiprecision::mpz_int num) {
-  const std::vector<uint32_t> &v = split_num_into_digits(num);
-
+uint32_t sum_of_digits(const BigNum &big_num) {
   uint32_t sum = 0;
-  for (const uint32_t d : v) {
+  for (const uint32_t d : big_num.big_num_raw()) {
     sum += d;
   }
 
@@ -114,10 +154,10 @@ int main() {
     return -1;
   }
 
-  boost::multiprecision::mpz_int f = factorial(x);
-  // std::cout << "Factorial of " << x << " = " << f << std::endl;
+  BigNum f_big_num = factorial(x);
+  // std::cout << "Factorial of " << x << " = " << f_big_num << std::endl;
 
-  uint32_t digit_sum = sum_of_digits(f);
+  uint32_t digit_sum = sum_of_digits(f_big_num);
   std::cout << "Sum of digits of factorial of " << x << " = " << digit_sum
             << std::endl;
 

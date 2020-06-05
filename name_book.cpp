@@ -42,8 +42,8 @@
  *
  * New changes:
  * - method IsConsistent() is executing for last element without any need, but
- *   to avoid that, we have to check is list is empty before loop. It would be
- *   changing one IF for another; Decide to keep it;
+ *   to avoid that, we have to check if list is empty before loop. It would be
+ *   changing one IF for another; Decide to keep it the way it is;
  * - IsConsistent() was kept for comparisons, because new approach does not need
  *   it;
  * - Code was changed to verify consistency of name list when name is
@@ -243,7 +243,7 @@ std::ostream &operator<<(std::ostream &o, const NameBook &name_book) {
 int main() {
   std::cout << "Enter file name with list of name: ";
 
-  // since was not clear how many names have to be handled, or when to stop
+  // since it was not clear how many names have to be handled, or when to stop
   // reading input, or even if list had to be checked every time one new name is
   // being added, I decided to read it all from a file.
   std::string file_name;
