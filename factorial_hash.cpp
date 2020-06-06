@@ -65,23 +65,25 @@ class BigNum {
     }
   }
 
-  BigNum &operator*(uint32_t num) {
+  BigNum operator*(uint32_t num) {
+    BigNum new_big_num(*this);
+
     uint32_t carry = 0;
 
-    for (uint32_t i = 0; i < big_num_.size(); ++i) {
-      uint32_t prod = big_num_[i] * num + carry;
+    for (uint32_t i = 0; i < new_big_num.big_num_.size(); ++i) {
+      uint32_t prod = new_big_num.big_num_[i] * num + carry;
 
-      big_num_[i] = prod % 10;
+      new_big_num.big_num_[i] = prod % 10;
 
       carry = prod / 10;
     }
 
     while (carry) {
-      big_num_.push_back(carry % 10);
+      new_big_num.big_num_.push_back(carry % 10);
       carry = carry / 10;
     }
 
-    return *this;
+    return new_big_num;
   }
 
   const std::vector<uint32_t> &big_num_raw() const { return big_num_; }
@@ -155,7 +157,7 @@ int main() {
   }
 
   BigNum f_big_num = factorial(x);
-  // std::cout << "Factorial of " << x << " = " << f_big_num << std::endl;
+  std::cout << "Factorial of " << x << " = " << f_big_num << std::endl;
 
   uint32_t digit_sum = sum_of_digits(f_big_num);
   std::cout << "Sum of digits of factorial of " << x << " = " << digit_sum
