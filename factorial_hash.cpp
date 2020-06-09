@@ -49,51 +49,93 @@
  * - Implemented operator*(), only one needed now, that performs multiplication;
  * - Implemented operator<<() -> it knows how to stream BigNumber;
  * - All other operator should be implemented;
+ *
+ * New New changes:
+ * - Now BigNum base type works with unsigned long (uint64_t);
+ * - BigNum constructor receives an uint64_t not string anymore
+ *     - It was string before because I imagined that BigNum could be
+ *       initialized already with a really big number (as string).
+ * - New operator=*
+ * - operator* and operator=* now work with 10^15 base, to make use of uint64_t;
+ *
+ * TODO: tests have shown that factorial for base != 10 is wrong. Fix it!
  */
 
 #include <iostream>
 #include <vector>
 
+/**
+ * \brief Big number class
+ */
 class BigNum {
  public:
+  /**
+   * \brief Default constructor
+   */
   BigNum() : big_num_() {}
 
-  explicit BigNum(const std::string &num) : big_num_() {
-    for (uint32_t i = 0; i < num.size(); ++i) {
-      std::string c(1, num[i]);
-      big_num_.push_back(std::atoi(c.c_str()));
-    }
-  }
+  /**
+   * \brief Construct from number
+   * \param num Initial value
+   */
+  explicit BigNum(uint64_t num) : big_num_() { big_num_.push_back(num); }
 
-  BigNum operator*(uint32_t num) {
+  BigNum operator*(uint64_t num) {
     BigNum new_big_num(*this);
 
-    uint32_t carry = 0;
+    uint64_t carry = 0;
+    constexpr uint64_t base = 1000000000000000000;
 
-    for (uint32_t i = 0; i < new_big_num.big_num_.size(); ++i) {
-      uint32_t prod = new_big_num.big_num_[i] * num + carry;
+    for (uint64_t i = 0; i < new_big_num.big_num_.size(); ++i) {
+      uint64_t prod = new_big_num.big_num_[i] * num + carry;
 
-      new_big_num.big_num_[i] = prod % 10;
+      new_big_num.big_num_[i] = prod % base;
 
-      carry = prod / 10;
+      carry = prod / base;
     }
 
     while (carry) {
-      new_big_num.big_num_.push_back(carry % 10);
-      carry = carry / 10;
+      new_big_num.big_num_.push_back(carry % base);
+      carry = carry / base;
     }
 
     return new_big_num;
   }
 
-  const std::vector<uint32_t> &big_num_raw() const { return big_num_; }
+  BigNum &operator*=(uint64_t num) {
+    uint64_t carry = 0;
+
+    constexpr uint64_t base = 1000000000000000000;
+    for (uint64_t i = 0; i < big_num_.size(); ++i) {
+      uint64_t prod = big_num_[i] * num + carry;
+
+      big_num_[i] = prod % base;
+
+      std::cout << big_num_[i] << std::endl;
+
+      carry = prod / base;
+    }
+
+    while (carry) {
+      big_num_.push_back(carry % base);
+      carry = carry / base;
+    }
+
+    return *this;
+  }
+
+  /**
+   * \brief Get big number raw data
+   * \return vector as big number
+   */
+  const std::vector<uint64_t> &big_num_raw() const { return big_num_; }
 
   // TODO(felipe.bolsi) add other operators!
 
   friend std::ostream &operator<<(std::ostream &o, const BigNum &big_num);
 
  private:
-  std::vector<uint32_t> big_num_;
+  std::vector<uint64_t> big_num_;
 };
 
 /**
@@ -115,11 +157,11 @@ std::ostream &operator<<(std::ostream &o, const BigNum &big_num) {
  * \param num Number to calculate factorial
  * \return Factorial of given number
  */
-BigNum factorial(uint32_t num) {
-  BigNum f("1");
+BigNum factorial(uint64_t num) {
+  BigNum f(1);
 
-  for (uint32_t i = num; i > 0; --i) {
-    f = f * i;
+  for (uint64_t i = num; i > 0; --i) {
+    f *= i;
   }
 
   return f;
@@ -130,9 +172,9 @@ BigNum factorial(uint32_t num) {
  * \param big_num Number to calculate the sum
  * \return Sum of digits of given number
  */
-uint32_t sum_of_digits(const BigNum &big_num) {
-  uint32_t sum = 0;
-  for (const uint32_t d : big_num.big_num_raw()) {
+uint64_t sum_of_digits(const BigNum &big_num) {
+  uint64_t sum = 0;
+  for (const uint64_t d : big_num.big_num_raw()) {
     sum += d;
   }
 
@@ -147,7 +189,7 @@ int main() {
   const uint32_t kUpperBound = 2000;
   std::cout << "Enter a number within range [0," << kUpperBound << "]: ";
 
-  uint32_t x = 0;
+  uint64_t x = 0;
   std::cin >> x;
 
   if (x > kUpperBound) {
@@ -159,7 +201,7 @@ int main() {
   BigNum f_big_num = factorial(x);
   std::cout << "Factorial of " << x << " = " << f_big_num << std::endl;
 
-  uint32_t digit_sum = sum_of_digits(f_big_num);
+  uint64_t digit_sum = sum_of_digits(f_big_num);
   std::cout << "Sum of digits of factorial of " << x << " = " << digit_sum
             << std::endl;
 
