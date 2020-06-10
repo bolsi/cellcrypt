@@ -57,10 +57,9 @@
  *       initialized already with a really big number (as string).
  * - New operator=*
  * - operator* and operator=* now work with 10^15 base, to make use of uint64_t;
- *
- * TODO: tests have shown that factorial for base != 10 is wrong. Fix it!
  */
 
+#include <iomanip>
 #include <iostream>
 #include <vector>
 
@@ -84,7 +83,7 @@ class BigNum {
     BigNum new_big_num(*this);
 
     uint64_t carry = 0;
-    constexpr uint64_t base = 1000000000000000000;
+    constexpr uint64_t base = 1000000000000000;
 
     for (uint64_t i = 0; i < new_big_num.big_num_.size(); ++i) {
       uint64_t prod = new_big_num.big_num_[i] * num + carry;
@@ -105,7 +104,7 @@ class BigNum {
   BigNum &operator*=(uint64_t num) {
     uint64_t carry = 0;
 
-    constexpr uint64_t base = 1000000000000000000;
+    constexpr uint64_t base = 1000000000000000;
     for (uint64_t i = 0; i < big_num_.size(); ++i) {
       uint64_t prod = big_num_[i] * num + carry;
 
@@ -145,7 +144,7 @@ class BigNum {
 std::ostream &operator<<(std::ostream &o, const BigNum &big_num) {
   if (!big_num.big_num_.empty()) {
     for (int32_t i = (big_num.big_num_.size() - 1); i >= 0; --i) {
-      o << big_num.big_num_[i];
+      o << std::setw(15) << std::setfill('0') << big_num.big_num_[i];
     }
   }
 
